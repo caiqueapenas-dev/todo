@@ -31,7 +31,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
     <div
       draggable
       onDragStart={(e) => onDragStart(e, task.id)}
-      className="bg-card p-3 rounded-lg shadow-sm border cursor-grab active:cursor-grabbing mb-2"
+      className="bg-card p-3 rounded-lg shadow-sm border cursor-grab active:cursor-grabbing mb-2 group"
     >
       <div className="flex justify-between items-start">
         <h4 className="font-bold text-card-foreground text-sm">{task.title}</h4>
@@ -40,17 +40,19 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           title={`Prioridade: ${priority.label}`}
         ></div>
       </div>
-      <p className="text-xs text-muted-foreground mt-1">{task.description}</p>
-      <div className="text-xs mt-3 space-y-1">
+      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+        {task.description}
+      </p>
+      <div className="text-xs mt-3 flex items-center gap-2 flex-wrap">
         <span
-          className={`px-2 py-0.5 rounded-full font-medium ${priority.bgColor} ${priority.textColor}`}
+          className={`px-2 py-0.5 rounded-full font-medium text-xs ${priority.bgColor} ${priority.textColor}`}
         >
           {priority.label}
         </span>
-        <span className="px-2 py-0.5 rounded-full font-medium bg-primary/10 text-primary block w-fit">
+        <span className="px-2 py-0.5 rounded-full font-medium text-xs bg-primary/10 text-primary">
           {client?.name || "Cliente"}
         </span>
-        <span className="px-2 py-0.5 rounded-full font-medium bg-secondary text-secondary-foreground block w-fit">
+        <span className="px-2 py-0.5 rounded-full font-medium text-xs bg-secondary text-secondary-foreground">
           {task.category}
         </span>
       </div>
@@ -63,7 +65,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         </span>
         <button
           onClick={() => onEdit(task)}
-          className="text-muted-foreground hover:text-primary"
+          className="text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity"
         >
           <Edit className="w-4 h-4" />
         </button>
@@ -86,10 +88,10 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   task,
   clients,
 }) => {
-  const [formData, setFormData] = useState<
+  const [formData, setFormData] = React.useState<
     Omit<Task, "id" | "createdAt"> | Task | null
   >(null);
-  useEffect(() => {
+  React.useEffect(() => {
     const initialData = task || {
       title: "",
       description: "",
@@ -124,19 +126,22 @@ export const TaskModal: React.FC<TaskModalProps> = ({
     onSave(formData);
   };
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-lg max-h-full overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-gray-800">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+      <div className="bg-card rounded-xl shadow-2xl p-6 w-full max-w-lg max-h-full overflow-y-auto border">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-bold text-foreground">
             {task ? "Editar Tarefa" : "Nova Tarefa"}
           </h2>
-          <button onClick={onClose}>
-            <X className="text-gray-500 hover:text-gray-800" />
+          <button
+            onClick={onClose}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <X />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="text-sm font-medium text-muted-foreground">
               Título
             </label>
             <input
@@ -144,12 +149,12 @@ export const TaskModal: React.FC<TaskModalProps> = ({
               name="title"
               value={formData.title}
               onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+              className="mt-1 block w-full bg-transparent border border-input rounded-md shadow-sm p-2 focus:ring-1 focus:ring-ring"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="text-sm font-medium text-muted-foreground">
               Descrição
             </label>
             <textarea
@@ -157,12 +162,12 @@ export const TaskModal: React.FC<TaskModalProps> = ({
               value={formData.description}
               onChange={handleChange}
               rows={3}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+              className="mt-1 block w-full bg-transparent border border-input rounded-md shadow-sm p-2 focus:ring-1 focus:ring-ring"
             ></textarea>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="text-sm font-medium text-muted-foreground">
                 Prazo Final
               </label>
               <input
@@ -170,19 +175,19 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                 name="deadline"
                 value={formData.deadline}
                 onChange={handleChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                className="mt-1 block w-full bg-transparent border border-input rounded-md shadow-sm p-2 focus:ring-1 focus:ring-ring"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="text-sm font-medium text-muted-foreground">
                 Cliente
               </label>
               <select
                 name="clientId"
                 value={formData.clientId}
                 onChange={handleChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                className="mt-1 block w-full bg-transparent border border-input rounded-md shadow-sm p-2 focus:ring-1 focus:ring-ring"
                 required
               >
                 <option value="" disabled>
@@ -198,14 +203,14 @@ export const TaskModal: React.FC<TaskModalProps> = ({
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="text-sm font-medium text-muted-foreground">
                 Categoria
               </label>
               <select
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                className="mt-1 block w-full bg-transparent border border-input rounded-md shadow-sm p-2 focus:ring-1 focus:ring-ring"
               >
                 {TASK_CATEGORIES.map((cat) => (
                   <option key={cat} value={cat}>
@@ -215,14 +220,14 @@ export const TaskModal: React.FC<TaskModalProps> = ({
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="text-sm font-medium text-muted-foreground">
                 Recorrência
               </label>
               <select
                 name="recurrence"
                 value={formData.recurrence}
                 onChange={handleChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                className="mt-1 block w-full bg-transparent border border-input rounded-md shadow-sm p-2 focus:ring-1 focus:ring-ring"
               >
                 <option value="none">Nenhuma</option>
                 <option value="daily">Diariamente</option>
@@ -233,17 +238,17 @@ export const TaskModal: React.FC<TaskModalProps> = ({
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="text-sm font-medium text-muted-foreground">
               Prioridade
             </label>
-            <div className="mt-2 flex justify-around bg-gray-100 rounded-lg p-1">
+            <div className="mt-2 grid grid-cols-3 gap-2 rounded-lg bg-muted p-1">
               {Object.entries(PRIORITY_MAP).map(([level, { label }]) => (
                 <label
                   key={level}
-                  className={`cursor-pointer w-full text-center p-2 rounded-md transition-colors ${
+                  className={`cursor-pointer text-center p-2 rounded-md transition-colors text-sm font-semibold ${
                     formData.priority == Number(level)
-                      ? "bg-blue-600 text-white shadow"
-                      : "hover:bg-gray-200"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "hover:bg-accent"
                   }`}
                 >
                   <input
@@ -263,15 +268,15 @@ export const TaskModal: React.FC<TaskModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+              className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-accent"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
             >
-              Salvar
+              Salvar Tarefa
             </button>
           </div>
         </form>
@@ -290,23 +295,22 @@ export const Header: React.FC<HeaderProps> = ({
   currentView,
   setView,
   onNewTask,
-  onNewClient,
 }) => (
-  <header className="p-4 bg-white border-b border-gray-200 flex flex-wrap justify-between items-center gap-4">
+  <header className="p-4 bg-card border-b flex flex-wrap justify-between items-center gap-4">
     <div className="flex items-center gap-2">
-      <CalendarIcon className="text-blue-600 h-8 w-8" />
-      <h1 className="text-2xl font-bold text-gray-800">Agenda Pro</h1>
+      <CalendarIcon className="text-primary h-8 w-8" />
+      <h1 className="text-2xl font-bold text-foreground">Agenda Pro</h1>
     </div>
-    <nav className="flex flex-wrap items-center gap-2">
-      {["daily", "weekly", "monthly", "list", "inbox", "clients"].map(
+    <nav className="flex flex-wrap items-center gap-1 bg-secondary p-1 rounded-lg">
+      {["monthly", "weekly", "daily", "list", "inbox", "clients"].map(
         (view) => (
           <button
             key={view}
             onClick={() => setView(view)}
-            className={`px-3 py-2 text-sm font-medium rounded-md capitalize ${
+            className={`px-3 py-1.5 text-sm font-medium rounded-md capitalize transition-colors ${
               currentView === view
-                ? "bg-blue-600 text-white"
-                : "text-gray-600 hover:bg-gray-100"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:bg-background hover:text-foreground"
             }`}
           >
             {view === "daily"
@@ -320,20 +324,14 @@ export const Header: React.FC<HeaderProps> = ({
               : view}
           </button>
         )
-      )}{" "}
+      )}
     </nav>
     <div className="flex items-center gap-3">
       <button
-        onClick={onNewClient}
-        className="px-4 py-2 text-sm bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 flex items-center gap-2"
-      >
-        <PlusIcon className="w-4 h-4" /> Cliente
-      </button>
-      <button
         onClick={onNewTask}
-        className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
+        className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 flex items-center gap-2"
       >
-        <PlusIcon className="w-4 h-4" /> Tarefa
+        <PlusIcon className="w-4 h-4" /> Nova Tarefa
       </button>
     </div>
   </header>
@@ -392,21 +390,27 @@ export const CalendarControls: React.FC<CalendarControlsProps> = ({
     return currentDate.toLocaleDateString("pt-BR", options);
   };
   return (
-    <div className="flex justify-between items-center p-4">
-      <h2 className="text-xl font-semibold text-gray-700 capitalize">
+    <div className="flex justify-between items-center p-4 bg-card border-b">
+      <h2 className="text-xl font-semibold text-foreground capitalize">
         {formatTitle()}
       </h2>
       <div className="flex items-center gap-2">
         <button
           onClick={() => setDate(new Date())}
-          className="px-3 py-1 border rounded-md text-sm"
+          className="px-3 py-1.5 border rounded-md text-sm font-medium hover:bg-accent"
         >
           Hoje
         </button>
-        <button onClick={() => changeDate(-1)}>
+        <button
+          onClick={() => changeDate(-1)}
+          className="p-1.5 border rounded-md hover:bg-accent"
+        >
           <ChevronLeftIcon />
         </button>
-        <button onClick={() => changeDate(1)}>
+        <button
+          onClick={() => changeDate(1)}
+          className="p-1.5 border rounded-md hover:bg-accent"
+        >
           <ChevronRightIcon />
         </button>
       </div>
@@ -430,22 +434,22 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 }) => {
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
-      <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-xl">
-        <h2 className="text-lg font-bold text-gray-900">{title}</h2>
-        <p className="mt-2 text-sm text-gray-600">{message}</p>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+      <div className="bg-card rounded-xl p-6 w-full max-w-sm shadow-xl border">
+        <h2 className="text-lg font-bold text-foreground">{title}</h2>
+        <p className="mt-2 text-sm text-muted-foreground">{message}</p>
         <div className="mt-6 flex justify-end gap-3">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 text-sm"
+            className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-accent text-sm font-semibold"
           >
             Cancelar
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm"
+            className="px-4 py-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 text-sm font-semibold"
           >
             Confirmar
           </button>
