@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { cn } from "../lib/utils";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Agenda Pro",
-  description: "Sua agenda de tarefas inteligente e moderna.",
+  title: "App de Agenda | Novo Visual",
+  description: "Seus compromissos, em um só lugar.",
 };
 
 export default function RootLayout({
@@ -16,13 +15,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
-      <body
-        className={cn(
-          "min-h-screen bg-secondary font-sans antialiased",
-          inter.variable
-        )}
-      >
+    <html lang="pt-BR">
+      <body className={`${inter.className} bg-gray-900 text-slate-200 flex items-center justify-center min-h-screen p-4`}>
         {children}
       </body>
     </html>

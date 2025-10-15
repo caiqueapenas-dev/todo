@@ -1041,3 +1041,82 @@ export default function AgendaPage() {
     </div>
   );
 }
+r-r">{renderView(leftView)}</div>
+        <div className="w-1/2">{renderView(rightView)}</div>
+      </main>
+
+      <TaskModal
+        isOpen={isTaskModalOpen}
+        onClose={() => setTaskModalOpen(false)}
+        onSave={handleSaveTask}
+        task={editingTask}
+        clients={clients}
+      />
+      <ConfirmationModal
+        isOpen={confirmState.isOpen}
+        onClose={() =>
+          setConfirmState({
+            isOpen: false,
+            title: "",
+            message: "",
+            onConfirm: null,
+          })
+        }
+        onConfirm={confirmState.onConfirm!}
+        title={confirmState.title}
+        message={confirmState.message}
+      />
+      <DayTasksModal
+        isOpen={dayTasksModalState.isOpen}
+        onClose={() => setDayTasksModalState({ isOpen: false, date: null })}
+        tasks={tasks}
+        clients={clients}
+        selectedDate={dayTasksModalState.date}
+        onEditTask={handleEditTask}
+        onDragStart={handleDragStart}
+      />
+    </div>
+  );
+}
+art}
+      />
+    </div>
+  );
+}
+r-r">{renderView(leftView)}</div>
+        <div className="w-1/2">{renderView(rightView)}</div>
+      </main>
+
+      <TaskModal
+        isOpen={isTaskModalOpen}
+        onClose={() => setTaskModalOpen(false)}
+        onSave={handleSaveTask}
+        task={editingTask}
+        clients={clients}
+      />
+      <ConfirmationModal
+        isOpen={confirmState.isOpen}
+        onClose={() =>
+          setConfirmState({
+            isOpen: false,
+            title: "",
+            message: "",
+            onConfirm: null,
+          })
+        }
+        onConfirm={confirmState.onConfirm!}
+        title={confirmState.title}
+        message={confirmState.message}
+      />
+      <DayTasksModal
+        isOpen={dayTasksModalState.isOpen}
+        onClose={() => setDayTasksModalState({ isOpen: false, date: null })}
+        tasks={tasks}
+        clients={clients}
+        selectedDate={dayTasksModalState.date}
+        onEditTask={handleEditTask}
+        onDragStart={handleDragStart}
+      />
+    </div>
+  );
+}
