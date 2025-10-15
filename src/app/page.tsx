@@ -749,7 +749,8 @@ const InboxView: React.FC<InboxProps> = ({
                 <div className="flex items-center gap-3">
                   <div
                     className={`w-2 h-2 rounded-full ${
-                      PRIORITY_MAP[task.priority].color
+                      PRIORITY_MAP[task.priority as keyof typeof PRIORITY_MAP]
+                        .color
                     }`}
                   ></div>
                   <div>
@@ -1005,85 +1006,6 @@ export default function AgendaPage() {
 
       <main className="flex-grow overflow-auto flex">
         <div className="w-1/2 border-r">{renderView(leftView)}</div>
-        <div className="w-1/2">{renderView(rightView)}</div>
-      </main>
-
-      <TaskModal
-        isOpen={isTaskModalOpen}
-        onClose={() => setTaskModalOpen(false)}
-        onSave={handleSaveTask}
-        task={editingTask}
-        clients={clients}
-      />
-      <ConfirmationModal
-        isOpen={confirmState.isOpen}
-        onClose={() =>
-          setConfirmState({
-            isOpen: false,
-            title: "",
-            message: "",
-            onConfirm: null,
-          })
-        }
-        onConfirm={confirmState.onConfirm!}
-        title={confirmState.title}
-        message={confirmState.message}
-      />
-      <DayTasksModal
-        isOpen={dayTasksModalState.isOpen}
-        onClose={() => setDayTasksModalState({ isOpen: false, date: null })}
-        tasks={tasks}
-        clients={clients}
-        selectedDate={dayTasksModalState.date}
-        onEditTask={handleEditTask}
-        onDragStart={handleDragStart}
-      />
-    </div>
-  );
-}
-r-r">{renderView(leftView)}</div>
-        <div className="w-1/2">{renderView(rightView)}</div>
-      </main>
-
-      <TaskModal
-        isOpen={isTaskModalOpen}
-        onClose={() => setTaskModalOpen(false)}
-        onSave={handleSaveTask}
-        task={editingTask}
-        clients={clients}
-      />
-      <ConfirmationModal
-        isOpen={confirmState.isOpen}
-        onClose={() =>
-          setConfirmState({
-            isOpen: false,
-            title: "",
-            message: "",
-            onConfirm: null,
-          })
-        }
-        onConfirm={confirmState.onConfirm!}
-        title={confirmState.title}
-        message={confirmState.message}
-      />
-      <DayTasksModal
-        isOpen={dayTasksModalState.isOpen}
-        onClose={() => setDayTasksModalState({ isOpen: false, date: null })}
-        tasks={tasks}
-        clients={clients}
-        selectedDate={dayTasksModalState.date}
-        onEditTask={handleEditTask}
-        onDragStart={handleDragStart}
-      />
-    </div>
-  );
-}
-art}
-      />
-    </div>
-  );
-}
-r-r">{renderView(leftView)}</div>
         <div className="w-1/2">{renderView(rightView)}</div>
       </main>
 
