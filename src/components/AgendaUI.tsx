@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
@@ -24,14 +23,28 @@ interface Appointment {
 
 // --- MODAL AND CARD COMPONENTS ---
 
-export const TaskModal: React.FC<any> = ({ isOpen, onClose, onSave, task, clients }) => {
+interface TaskModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (task: Omit<Task, "id" | "createdAt"> | Task) => void;
+  task: Task | null;
+  clients: Client[];
+}
+
+export const TaskModal: React.FC<TaskModalProps> = ({
+  isOpen,
+  onClose,
+  onSave,
+  task,
+  clients,
+}) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [deadline, setDeadline] = useState<string | null>(null);
   const [clientId, setClientId] = useState<string>("");
   const [category, setCategory] = useState("");
-  const [priority, setPriority] = useState(1);
-  const [recurrence, setRecurrence] = useState("none");
+  const [priority, setPriority] = useState<1 | 2 | 3>(1);
+  const [recurrence, setRecurrence] = useState<Task["recurrence"]>("none");
 
   useEffect(() => {
     if (task) {
@@ -126,7 +139,7 @@ export const TaskModal: React.FC<any> = ({ isOpen, onClose, onSave, task, client
           </select>
           <select
             value={priority}
-            onChange={(e) => setPriority(parseInt(e.target.value))}
+            onChange={(e) => setPriority(parseInt(e.target.value) as 1 | 2 | 3)}
             className="w-full border p-2 rounded-md bg-transparent"
           >
             {Object.entries(PRIORITY_MAP).map(([level, { label }]: any) => (
@@ -137,7 +150,9 @@ export const TaskModal: React.FC<any> = ({ isOpen, onClose, onSave, task, client
           </select>
           <select
             value={recurrence}
-            onChange={(e) => setRecurrence(e.target.value)}
+            onChange={(e) =>
+              setRecurrence(e.target.value as Task["recurrence"])
+            }
             className="w-full border p-2 rounded-md bg-transparent"
           >
             <option value="none">Não se repete</option>
@@ -165,7 +180,19 @@ export const TaskModal: React.FC<any> = ({ isOpen, onClose, onSave, task, client
     </div>
   );
 };
-export const TaskCard: React.FC<any> = ({ task, clients, onEdit, onDragStart }) => {
+interface TaskCardProps {
+  task: Task;
+  clients: Client[];
+  onEdit: (task: Task) => void;
+  onDragStart: (e: React.DragEvent, taskId: string) => void;
+}
+
+export const TaskCard: React.FC<TaskCardProps> = ({
+  task,
+  clients,
+  onEdit,
+  onDragStart,
+}) => {
   const client = clients.find((c: any) => c.id === task.clientId);
   const priority = PRIORITY_MAP[task.priority as keyof typeof PRIORITY_MAP];
 
@@ -178,7 +205,10 @@ export const TaskCard: React.FC<any> = ({ task, clients, onEdit, onDragStart }) 
     >
       <div className="flex justify-between items-start">
         <p className="font-semibold text-sm text-foreground">{task.title}</p>
-        <button onClick={() => onEdit(task)} className="text-muted-foreground hover:text-foreground">
+        <button
+          onClick={() => onEdit(task)}
+          className="text-muted-foreground hover:text-foreground"
+        >
           <Edit className="w-4 h-4" />
         </button>
       </div>
@@ -189,14 +219,26 @@ export const TaskCard: React.FC<any> = ({ task, clients, onEdit, onDragStart }) 
         >
           {priority.label}
         </span>
-        <span className="text-xs text-muted-foreground">
-          {task.category}
-        </span>
+        <span className="text-xs text-muted-foreground">{task.category}</span>
       </div>
     </div>
   );
 };
-export const ConfirmationModal: React.FC<any> = ({ isOpen, onClose, onConfirm, title, message }) => {
+interface ConfirmationModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title: string;
+  message: string;
+}
+
+export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  title,
+  message,
+}) => {
   if (!isOpen) return null;
 
   return (
@@ -222,7 +264,21 @@ export const ConfirmationModal: React.FC<any> = ({ isOpen, onClose, onConfirm, t
     </div>
   );
 };
-export const Header: React.FC<any> = ({ onNewTask, setLeftView, setRightView, leftView, rightView }) => {
+interface HeaderProps {
+  onNewTask: () => void;
+  setLeftView: (view: View) => void;
+  setRightView: (view: View) => void;
+  leftView: View;
+  rightView: View;
+}
+
+export const Header: React.FC<HeaderProps> = ({
+  onNewTask,
+  setLeftView,
+  setRightView,
+  leftView,
+  rightView,
+}) => {
   return (
     <header className="p-4 bg-card border-b flex justify-between items-center">
       <div className="flex items-center gap-4">
@@ -230,7 +286,7 @@ export const Header: React.FC<any> = ({ onNewTask, setLeftView, setRightView, le
         <div className="flex items-center gap-2">
           <select
             value={leftView}
-            onChange={(e) => setLeftView(e.target.value)}
+            onChange={(e) => setLeftView(e.target.value as View)}
             className="bg-transparent border rounded-md p-1 text-sm"
           >
             <option value="monthly">Mensal</option>
@@ -242,7 +298,7 @@ export const Header: React.FC<any> = ({ onNewTask, setLeftView, setRightView, le
           </select>
           <select
             value={rightView}
-            onChange={(e) => setRightView(e.target.value)}
+            onChange={(e) => setRightView(e.target.value as View)}
             className="bg-transparent border rounded-md p-1 text-sm"
           >
             <option value="monthly">Mensal</option>
@@ -263,7 +319,17 @@ export const Header: React.FC<any> = ({ onNewTask, setLeftView, setRightView, le
     </header>
   );
 };
-export const CalendarControls: React.FC<any> = ({ currentDate, setDate, view }) => {
+interface CalendarControlsProps {
+  currentDate: Date;
+  setDate: (date: Date) => void;
+  view: View;
+}
+
+export const CalendarControls: React.FC<CalendarControlsProps> = ({
+  currentDate,
+  setDate,
+  view,
+}) => {
   const changeView = (newView: "monthly" | "weekly" | "daily") => {
     // This function should be passed down from the parent to change the main view
   };
@@ -285,7 +351,10 @@ export const CalendarControls: React.FC<any> = ({ currentDate, setDate, view }) 
   return (
     <div className="p-4 bg-card border-b flex justify-between items-center">
       <div className="flex items-center gap-2">
-        <button onClick={() => navigate("prev")} className="p-2 rounded-md hover:bg-accent">
+        <button
+          onClick={() => navigate("prev")}
+          className="p-2 rounded-md hover:bg-accent"
+        >
           &lt;
         </button>
         <h2 className="text-lg font-semibold">
@@ -294,12 +363,18 @@ export const CalendarControls: React.FC<any> = ({ currentDate, setDate, view }) 
             year: "numeric",
           })}
         </h2>
-        <button onClick={() => navigate("next")} className="p-2 rounded-md hover:bg-accent">
+        <button
+          onClick={() => navigate("next")}
+          className="p-2 rounded-md hover:bg-accent"
+        >
           &gt;
         </button>
       </div>
       <div className="flex items-center gap-2">
-        <button onClick={() => setDate(new Date())} className="p-2 rounded-md hover:bg-accent">
+        <button
+          onClick={() => setDate(new Date())}
+          className="p-2 rounded-md hover:bg-accent"
+        >
           Hoje
         </button>
         <select
@@ -315,7 +390,25 @@ export const CalendarControls: React.FC<any> = ({ currentDate, setDate, view }) 
     </div>
   );
 };
-export const DayTasksModal: React.FC<any> = ({ isOpen, onClose, tasks, clients, selectedDate, onEditTask, onDragStart }) => {
+interface DayTasksModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  tasks: Task[];
+  clients: Client[];
+  selectedDate: string | null;
+  onEditTask: (task: Task) => void;
+  onDragStart: (e: React.DragEvent, taskId: string) => void;
+}
+
+export const DayTasksModal: React.FC<DayTasksModalProps> = ({
+  isOpen,
+  onClose,
+  tasks,
+  clients,
+  selectedDate,
+  onEditTask,
+  onDragStart,
+}) => {
   if (!isOpen) return null;
 
   const tasksForDay = tasks.filter((t: any) => t.deadline === selectedDate);
@@ -331,7 +424,9 @@ export const DayTasksModal: React.FC<any> = ({ isOpen, onClose, tasks, clients, 
         </button>
         <h2 className="text-xl font-bold mb-4">
           Tarefas para{" "}
-          {new Date(selectedDate + "T00:00:00-03:00").toLocaleDateString("pt-BR")}
+          {new Date(selectedDate + "T00:00:00-03:00").toLocaleDateString(
+            "pt-BR"
+          )}
         </h2>
         <div className="space-y-3">
           {tasksForDay.length > 0 ? (
@@ -357,7 +452,25 @@ export const DayTasksModal: React.FC<any> = ({ isOpen, onClose, tasks, clients, 
 
 // --- VIEW COMPONENTS ---
 
-const MonthlyView: React.FC<any> = ({ tasks, date, onDrop, onDragOver, onDragStart, onDayClick, holidays }) => {
+interface MonthlyViewProps {
+  tasks: Task[];
+  date: Date;
+  onDrop: (e: React.DragEvent, newDate: string) => void;
+  onDragOver: (e: React.DragEvent) => void;
+  onDragStart: (e: React.DragEvent, taskId: string) => void;
+  onDayClick: (date: string) => void;
+  holidays: Holiday[];
+}
+
+const MonthlyView: React.FC<MonthlyViewProps> = ({
+  tasks,
+  date,
+  onDrop,
+  onDragOver,
+  onDragStart,
+  onDayClick,
+  holidays,
+}) => {
   const getDaysInMonth = () => {
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -457,7 +570,25 @@ const MonthlyView: React.FC<any> = ({ tasks, date, onDrop, onDragOver, onDragSta
     </div>
   );
 };
-const WeeklyView: React.FC<any> = ({ tasks, clients, date, onEdit, onDrop, onDragOver, onDragStart }) => {
+interface WeeklyViewProps {
+  tasks: Task[];
+  clients: Client[];
+  date: Date;
+  onEdit: (task: Task) => void;
+  onDrop: (e: React.DragEvent, newDate: string) => void;
+  onDragOver: (e: React.DragEvent) => void;
+  onDragStart: (e: React.DragEvent, taskId: string) => void;
+}
+
+const WeeklyView: React.FC<WeeklyViewProps> = ({
+  tasks,
+  clients,
+  date,
+  onEdit,
+  onDrop,
+  onDragOver,
+  onDragStart,
+}) => {
   const getWeekDays = () => {
     const start = new Date(date);
     start.setDate(start.getDate() - start.getDay());
@@ -510,7 +641,25 @@ const WeeklyView: React.FC<any> = ({ tasks, clients, date, onEdit, onDrop, onDra
     </div>
   );
 };
-const DailyView: React.FC<any> = ({ tasks, clients, date, onEdit, onDrop, onDragOver, onDragStart }) => {
+interface DailyViewProps {
+  tasks: Task[];
+  clients: Client[];
+  date: Date;
+  onEdit: (task: Task) => void;
+  onDrop: (e: React.DragEvent, newDate: string) => void;
+  onDragOver: (e: React.DragEvent) => void;
+  onDragStart: (e: React.DragEvent, taskId: string) => void;
+}
+
+const DailyView: React.FC<DailyViewProps> = ({
+  tasks,
+  clients,
+  date,
+  onEdit,
+  onDrop,
+  onDragOver,
+  onDragStart,
+}) => {
   const dayDate = date.toISOString().split("T")[0];
   const tasksForDay = tasks.filter((t: any) => t.deadline === dayDate);
   return (
@@ -543,7 +692,31 @@ const DailyView: React.FC<any> = ({ tasks, clients, date, onEdit, onDrop, onDrag
     </div>
   );
 };
-const ListView: React.FC<any> = ({ tasks, clients, onEdit, setSort, sortConfig, onTaskDelete, inlineEditing, setInlineEditing, onUpdateField }) => {
+interface ListViewProps {
+  tasks: Task[];
+  clients: Client[];
+  onEdit: (task: Task) => void;
+  setSort: (config: SortConfig) => void;
+  sortConfig: SortConfig;
+  onTaskDelete: (taskId: string) => void;
+  inlineEditing: { taskId: string; field: keyof Task } | null;
+  setInlineEditing: (
+    editing: { taskId: string; field: keyof Task } | null
+  ) => void;
+  onUpdateField: (taskId: string, field: keyof Task, value: any) => void;
+}
+
+const ListView: React.FC<ListViewProps> = ({
+  tasks,
+  clients,
+  onEdit,
+  setSort,
+  sortConfig,
+  onTaskDelete,
+  inlineEditing,
+  setInlineEditing,
+  onUpdateField,
+}) => {
   const sortedTasks = useMemo(() => {
     let sortableItems = [...tasks];
     if (sortConfig) {
@@ -628,7 +801,8 @@ const ListView: React.FC<any> = ({ tasks, clients, onEdit, setSort, sortConfig, 
           <tbody className="bg-card divide-y">
             {sortedTasks.map((task: any) => {
               const client = clients.find((c: any) => c.id === task.clientId);
-              const priority = PRIORITY_MAP[task.priority];
+              const priority =
+                PRIORITY_MAP[task.priority as keyof typeof PRIORITY_MAP];
               const isEditing = (field: keyof Task) =>
                 inlineEditing?.taskId === task.id &&
                 inlineEditing?.field === field;
@@ -739,9 +913,21 @@ const ListView: React.FC<any> = ({ tasks, clients, onEdit, setSort, sortConfig, 
                       </select>
                     ) : (
                       <span
-                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${priority.bgColor} ${priority.textColor}`}
+                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          PRIORITY_MAP[
+                            task.priority as keyof typeof PRIORITY_MAP
+                          ].bgColor
+                        } ${
+                          PRIORITY_MAP[
+                            task.priority as keyof typeof PRIORITY_MAP
+                          ].textColor
+                        }`}
                       >
-                        {priority.label}
+                        {
+                          PRIORITY_MAP[
+                            task.priority as keyof typeof PRIORITY_MAP
+                          ].label
+                        }
                       </span>
                     )}
                   </td>
@@ -794,7 +980,17 @@ const ListView: React.FC<any> = ({ tasks, clients, onEdit, setSort, sortConfig, 
     </div>
   );
 };
-const ClientManagerView: React.FC<any> = ({ clients, onSave, onDelete }) => {
+interface ClientManagerProps {
+  clients: Client[];
+  onSave: (client: Omit<Client, "id"> | Client) => void;
+  onDelete: (clientId: string) => void;
+}
+
+const ClientManagerView: React.FC<ClientManagerProps> = ({
+  clients,
+  onSave,
+  onDelete,
+}) => {
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
 
@@ -813,7 +1009,19 @@ const ClientManagerView: React.FC<any> = ({ clients, onSave, onDelete }) => {
     setIsClientModalOpen(false);
   };
 
-  const ClientModal: React.FC<any> = ({ isOpen, onClose, onSave, client }) => {
+  interface ClientModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onSave: (client: Omit<Client, "id"> | Client) => void;
+    client: Client | null;
+  }
+
+  const ClientModal: React.FC<ClientModalProps> = ({
+    isOpen,
+    onClose,
+    onSave,
+    client,
+  }) => {
     const [name, setName] = useState("");
 
     useEffect(() => {
@@ -917,7 +1125,19 @@ const ClientManagerView: React.FC<any> = ({ clients, onSave, onDelete }) => {
     </div>
   );
 };
-const InboxView: React.FC<any> = ({ tasks, clients, onSave, onEdit }) => {
+interface InboxProps {
+  tasks: Task[];
+  clients: Client[];
+  onSave: (task: Omit<Task, "id" | "createdAt">) => void;
+  onEdit: (task: Task) => void;
+}
+
+const InboxView: React.FC<InboxProps> = ({
+  tasks,
+  clients,
+  onSave,
+  onEdit,
+}) => {
   const [quickTaskTitle, setQuickTaskTitle] = useState("");
   const [selectedClientId, setSelectedClientId] = useState<string>(
     clients[0]?.id || ""
@@ -996,7 +1216,8 @@ const InboxView: React.FC<any> = ({ tasks, clients, onSave, onEdit }) => {
                 <div className="flex items-center gap-3">
                   <div
                     className={`w-2 h-2 rounded-full ${
-                      PRIORITY_MAP[task.priority].color
+                      PRIORITY_MAP[task.priority as keyof typeof PRIORITY_MAP]
+                        .color
                     }`}
                   ></div>
                   <div>
@@ -1030,10 +1251,10 @@ const InboxView: React.FC<any> = ({ tasks, clients, onSave, onEdit }) => {
 const AgendaUI: React.FC = () => {
   // --- STATE MANAGEMENT ---
   const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [date, setDate] = useState('');
-  const [time, setTime] = useState('');
-  const [description, setDescription] = useState('');
-  const [addButtonText, setAddButtonText] = useState('Adicionar');
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
+  const [description, setDescription] = useState("");
+  const [addButtonText, setAddButtonText] = useState("Adicionar");
 
   const [leftView, setLeftView] = useState<View>("monthly");
   const [rightView, setRightView] = useState<View>("inbox");
@@ -1065,7 +1286,7 @@ const AgendaUI: React.FC = () => {
   // --- USE EFFECT HOOKS ---
 
   useEffect(() => {
-    const storedAppointments = localStorage.getItem('appointments-dark');
+    const storedAppointments = localStorage.getItem("appointments-dark");
     if (storedAppointments) {
       setAppointments(JSON.parse(storedAppointments));
     }
@@ -1087,21 +1308,21 @@ const AgendaUI: React.FC = () => {
   useEffect(() => {
     const handleListClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      const removeButton = target.closest('.remove-btn');
+      const removeButton = target.closest(".remove-btn");
       if (removeButton) {
-        const id = Number(removeButton.getAttribute('data-id'));
+        const id = Number(removeButton.getAttribute("data-id"));
         removeAppointment(id);
       }
     };
 
-    const appointmentList = document.getElementById('appointmentList');
+    const appointmentList = document.getElementById("appointmentList");
     if (appointmentList) {
-      appointmentList.addEventListener('click', handleListClick);
+      appointmentList.addEventListener("click", handleListClick);
     }
 
     return () => {
       if (appointmentList) {
-        appointmentList.removeEventListener('click', handleListClick);
+        appointmentList.removeEventListener("click", handleListClick);
       }
     };
   }, [appointments]);
@@ -1109,13 +1330,14 @@ const AgendaUI: React.FC = () => {
   // --- FUNCTIONS ---
 
   const renderAppointments = (apps: Appointment[]) => {
-    const appointmentList = document.getElementById('appointmentList');
+    const appointmentList = document.getElementById("appointmentList");
     if (!appointmentList) return;
 
-    appointmentList.innerHTML = '';
+    appointmentList.innerHTML = "";
 
     if (apps.length === 0) {
-      appointmentList.innerHTML = '<p id="emptyMessage" class="text-slate-500 text-center py-8">Você está livre. Nenhum compromisso agendado!</p>';
+      appointmentList.innerHTML =
+        '<p id="emptyMessage" class="text-slate-500 text-center py-8">Você está livre. Nenhum compromisso agendado!</p>';
       return;
     }
 
@@ -1125,27 +1347,37 @@ const AgendaUI: React.FC = () => {
       return dateA.getTime() - dateB.getTime();
     });
 
-    sortedAppointments.forEach(app => {
-      const appointmentElement = document.createElement('div');
-      appointmentElement.className = 'bg-gray-700/50 p-4 rounded-lg flex items-center justify-between gap-4 border border-transparent hover:border-teal-500/50 transition-all';
+    sortedAppointments.forEach((app) => {
+      const appointmentElement = document.createElement("div");
+      appointmentElement.className =
+        "bg-gray-700/50 p-4 rounded-lg flex items-center justify-between gap-4 border border-transparent hover:border-teal-500/50 transition-all";
 
-      const formattedDate = new Date(`${app.date}T00:00:00`).toLocaleDateString('pt-BR', {
-        day: '2-digit',
-        month: 'short'
-      });
+      const formattedDate = new Date(`${app.date}T00:00:00`).toLocaleDateString(
+        "pt-BR",
+        {
+          day: "2-digit",
+          month: "short",
+        }
+      );
 
       appointmentElement.innerHTML = `
         <div class="flex items-center gap-4">
           <div class="text-center bg-gray-900/50 rounded-md px-3 py-1 border border-gray-600">
-            <p class="font-bold text-teal-400 text-lg">${formattedDate.split(' ')[0]}</p>
-            <p class="text-xs text-slate-400 uppercase">${formattedDate.split(' ')[2]}</p>
+            <p class="font-bold text-teal-400 text-lg">${
+              formattedDate.split(" ")[0]
+            }</p>
+            <p class="text-xs text-slate-400 uppercase">${
+              formattedDate.split(" ")[2]
+            }</p>
           </div>
           <div>
             <p class="font-semibold text-slate-100">${app.description}</p>
             <p class="text-sm text-slate-400">${app.time}</p>
           </div>
         </div>
-        <button data-id="${app.id}" class="remove-btn flex-shrink-0 text-gray-500 hover:text-red-500 hover:scale-110 transition-all p-2 rounded-full hover:bg-red-500/10">
+        <button data-id="${
+          app.id
+        }" class="remove-btn flex-shrink-0 text-gray-500 hover:text-red-500 hover:scale-110 transition-all p-2 rounded-full hover:bg-red-500/10">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
             <path d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5m-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5M4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06m3 0l-.5 8.5a.5.5 0 1 0 .998.06l.5-8.5a.5.5 0 1 0-.998.06m2.5.029l-.5 8.5a.5.5 0 1 0 .998-.06l.5-8.5a.5.5 0 1 0-.998.06"/>
           </svg>
@@ -1156,15 +1388,15 @@ const AgendaUI: React.FC = () => {
   };
 
   const saveAndRender = (apps: Appointment[]) => {
-    localStorage.setItem('appointments-dark', JSON.stringify(apps));
+    localStorage.setItem("appointments-dark", JSON.stringify(apps));
     renderAppointments(apps);
   };
 
   const addAppointment = () => {
     if (!date || !time || !description.trim()) {
-      setAddButtonText('Preencha todos os campos!');
+      setAddButtonText("Preencha todos os campos!");
       setTimeout(() => {
-        setAddButtonText('Adicionar');
+        setAddButtonText("Adicionar");
       }, 2000);
       return;
     }
@@ -1173,20 +1405,20 @@ const AgendaUI: React.FC = () => {
       id: Date.now(),
       date,
       time,
-      description: description.trim()
+      description: description.trim(),
     };
 
     const updatedAppointments = [...appointments, newAppointment];
     setAppointments(updatedAppointments);
     saveAndRender(updatedAppointments);
 
-    setDate('');
-    setTime('');
-    setDescription('');
+    setDate("");
+    setTime("");
+    setDescription("");
   };
 
   const removeAppointment = (id: number) => {
-    const updatedAppointments = appointments.filter(app => app.id !== id);
+    const updatedAppointments = appointments.filter((app) => app.id !== id);
     setAppointments(updatedAppointments);
     saveAndRender(updatedAppointments);
   };
@@ -1387,34 +1619,87 @@ const AgendaUI: React.FC = () => {
       {/* Coluna da Direita - Agenda */}
       <div className="w-1/2 h-full bg-gray-800 rounded-2xl shadow-2xl shadow-black/30 p-6 md:p-8 border border-gray-700 flex flex-col">
         <header className="mb-8 text-center">
-          <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-cyan-500">Agenda PRO</h1>
-          <p className="text-slate-400 mt-2">Seus compromissos, em um só lugar.</p>
+          <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-cyan-500">
+            Agenda PRO
+          </h1>
+          <p className="text-slate-400 mt-2">
+            Seus compromissos, em um só lugar.
+          </p>
         </header>
 
         <div className="bg-black/20 p-6 rounded-xl mb-8">
-          <h2 className="text-xl font-semibold mb-5 text-slate-100">Adicionar Compromisso</h2>
+          <h2 className="text-xl font-semibold mb-5 text-slate-100">
+            Adicionar Compromisso
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-1">
-              <label htmlFor="date" className="block text-sm font-medium text-slate-400 mb-1">Data</label>
-              <input type="date" id="date" value={date} onChange={e => setDate(e.target.value)} className="w-full bg-gray-700 text-slate-200 px-4 py-2 border border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" />
+              <label
+                htmlFor="date"
+                className="block text-sm font-medium text-slate-400 mb-1"
+              >
+                Data
+              </label>
+              <input
+                type="date"
+                id="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="w-full bg-gray-700 text-slate-200 px-4 py-2 border border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition"
+              />
             </div>
             <div className="md:col-span-1">
-              <label htmlFor="time" className="block text-sm font-medium text-slate-400 mb-1">Hora</label>
-              <input type="time" id="time" value={time} onChange={e => setTime(e.target.value)} className="w-full bg-gray-700 text-slate-200 px-4 py-2 border border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" />
+              <label
+                htmlFor="time"
+                className="block text-sm font-medium text-slate-400 mb-1"
+              >
+                Hora
+              </label>
+              <input
+                type="time"
+                id="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                className="w-full bg-gray-700 text-slate-200 px-4 py-2 border border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition"
+              />
             </div>
             <div className="md:col-span-2">
-              <label htmlFor="description" className="block text-sm font-medium text-slate-400 mb-1">Descrição</label>
-              <textarea id="description" value={description} onChange={e => setDescription(e.target.value)} rows={3} className="w-full bg-gray-700 text-slate-200 px-4 py-2 border border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" placeholder="Ex: Reunião de alinhamento semanal..."></textarea>
+              <label
+                htmlFor="description"
+                className="block text-sm font-medium text-slate-400 mb-1"
+              >
+                Descrição
+              </label>
+              <textarea
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={3}
+                className="w-full bg-gray-700 text-slate-200 px-4 py-2 border border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition"
+                placeholder="Ex: Reunião de alinhamento semanal..."
+              ></textarea>
             </div>
           </div>
-          <button id="addButton" onClick={addAppointment} className={`mt-5 w-full text-white font-bold py-3 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-teal-500 transition-all transform hover:scale-[1.02] active:scale-[0.98] ${!date || !time || !description.trim() ? 'bg-teal-500 hover:bg-teal-600' : 'bg-teal-500 hover:bg-teal-600'}`}>
+          <button
+            id="addButton"
+            onClick={addAppointment}
+            className={`mt-5 w-full text-white font-bold py-3 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-teal-500 transition-all transform hover:scale-[1.02] active:scale-[0.98] ${
+              !date || !time || !description.trim()
+                ? "bg-teal-500 hover:bg-teal-600"
+                : "bg-teal-500 hover:bg-teal-600"
+            }`}
+          >
             {addButtonText}
           </button>
         </div>
 
         <div>
-          <h2 className="text-xl font-semibold mb-4 text-slate-100">Próximos Compromissos</h2>
-          <div id="appointmentList" className="space-y-3 max-h-80 overflow-y-auto pr-2">
+          <h2 className="text-xl font-semibold mb-4 text-slate-100">
+            Próximos Compromissos
+          </h2>
+          <div
+            id="appointmentList"
+            className="space-y-3 max-h-80 overflow-y-auto pr-2"
+          >
             {/* Appointments will be rendered here */}
           </div>
         </div>
