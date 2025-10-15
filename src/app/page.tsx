@@ -10,8 +10,7 @@ import {
   Header,
   CalendarControls,
 } from "../components/AgendaUI";
-import { Edit, Plus, Trash } from "lucide-react";
-import { MainLayout } from "@/components/layout";
+import { Edit, Plus, Trash, X } from "lucide-react";
 
 // --- VIEW PROPS ---
 interface ViewProps {
@@ -411,7 +410,13 @@ const ClientManagerView: React.FC<ClientManagerProps> = ({
     };
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
-        <div className="bg-card rounded-lg p-6 w-full max-w-md border">
+        <div className="bg-card rounded-lg p-6 w-full max-w-md border relative">
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
+          >
+            <X className="w-5 h-5" />
+          </button>
           <h2 className="text-xl font-bold mb-4">
             {client ? "Editar Cliente" : "Novo Cliente"}
           </h2>
@@ -589,36 +594,6 @@ const InboxView: React.FC<InboxProps> = ({
     </div>
   );
 };
-
-// --- COMPONENTE PRINCIPAL DA PÁGINA ---
-
-interface CalendarViewProps extends ViewProps {
-  date: Date;
-}
-
-// --- VIEWS ---
-
-interface ListViewProps {
-  tasks: Task[];
-  clients: Client[];
-  onEdit: (task: Task) => void;
-  setSort: (config: SortConfig) => void;
-  sortConfig: SortConfig;
-  onTaskDelete: (taskId: string) => void;
-}
-
-interface ClientManagerProps {
-  clients: Client[];
-  onSave: (client: Omit<Client, "id"> | Client) => void;
-  onDelete: (clientId: string) => void;
-}
-
-interface InboxProps {
-  tasks: Task[];
-  clients: Client[];
-  onSave: (task: Omit<Task, "id" | "createdAt">) => void;
-  onEdit: (task: Task) => void;
-}
 
 // --- COMPONENTE PRINCIPAL DA PÁGINA ---
 export default function AgendaPage() {

@@ -2,7 +2,15 @@
 import React, { useState, useEffect } from "react";
 import type { Task, Client } from "../lib/types";
 import { PRIORITY_MAP, TASK_CATEGORIES } from "../lib/data";
-import { Edit, Trash, X } from "lucide-react";
+import {
+  Edit,
+  Trash,
+  X,
+  Calendar as CalendarIcon,
+  Plus as PlusIcon,
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
+} from "lucide-react";
 
 // --- COMPONENTES DA UI ---
 interface TaskCardProps {
@@ -123,7 +131,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
             {task ? "Editar Tarefa" : "Nova Tarefa"}
           </h2>
           <button onClick={onClose}>
-            <XIcon className="text-gray-500 hover:text-gray-800" />
+            <X className="text-gray-500 hover:text-gray-800" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
