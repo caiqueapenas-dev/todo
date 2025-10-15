@@ -58,6 +58,11 @@ export const TASK_CATEGORIES: string[] = [
   "Outro",
 ];
 
+export interface Holiday {
+  date: string; // Formato YYYY-MM-DD
+  name: string;
+}
+
 type PriorityDetail = {
   label: string;
   color: string;

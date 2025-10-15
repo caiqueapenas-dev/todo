@@ -7,12 +7,17 @@ export interface Task {
   id: string;
   title: string;
   description: string;
-  deadline: string; // Formato YYYY-MM-DD
+  deadline: string | null; // Formato YYYY-MM-DD
   clientId: string;
   priority: 1 | 2 | 3;
   category: string;
   recurrence: "none" | "daily" | "weekly" | "monthly" | "annually";
   createdAt: string; // ISO String
+}
+
+export interface Holiday {
+  date: string;
+  name: string;
 }
 
 export type SortConfig = {

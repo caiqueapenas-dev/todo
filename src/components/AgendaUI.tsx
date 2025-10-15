@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import type { Task, Client } from "../lib/types";
+import type { Task, Client, Holiday } from "../lib/types";
 import { PRIORITY_MAP, TASK_CATEGORIES } from "../lib/data";
 import {
   Edit,
@@ -10,7 +10,14 @@ import {
   Plus as PlusIcon,
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
+  Check,
+  ChevronsUpDown,
 } from "lucide-react";
+import { Combobox } from "@headlessui/react";
+
+function classNames(...classes: (string | boolean)[]) {
+  return classes.filter(Boolean).join(" ");
+}
 
 // --- COMPONENTES DA UI ---
 interface TaskCardProps {
@@ -59,9 +66,11 @@ export const TaskCard: React.FC<TaskCardProps> = ({
       <div className="text-xs text-muted-foreground mt-2 pt-2 border-t flex justify-between items-center">
         <span>
           Prazo:{" "}
-          {new Date(task.deadline + "T00:00:00-03:00").toLocaleDateString(
-            "pt-BR"
-          )}
+          {task.deadline
+            ? new Date(task.deadline + "T00:00:00-03:00").toLocaleDateString(
+                "pt-BR"
+              )
+            : "A definir"}
         </span>
         <button
           onClick={() => onEdit(task)}
@@ -173,32 +182,88 @@ export const TaskModal: React.FC<TaskModalProps> = ({
               <input
                 type="date"
                 name="deadline"
-                value={formData.deadline}
+                value={formData.deadline || ""}
                 onChange={handleChange}
                 className="mt-1 block w-full bg-transparent border border-input rounded-md shadow-sm p-2 focus:ring-1 focus:ring-ring"
-                required
               />
             </div>
             <div>
               <label className="text-sm font-medium text-muted-foreground">
                 Cliente
               </label>
-              <select
-                name="clientId"
+              <Combobox
+                as="div"
                 value={formData.clientId}
-                onChange={handleChange}
-                className="mt-1 block w-full bg-transparent border border-input rounded-md shadow-sm p-2 focus:ring-1 focus:ring-ring"
-                required
+                onChange={(value: string) =>
+                  setFormData((prev) =>
+                    prev ? { ...prev, clientId: value } : null
+                  )
+                }
               >
-                <option value="" disabled>
-                  Selecione um cliente
-                </option>
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+                <div className="relative mt-1">
+                  <Combobox.Input
+                    className="w-full rounded-md border border-input bg-transparent py-2 pl-3 pr-10 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                      /* Você pode lidar com a filtragem aqui se quiser */
+                    }}
+                    displayValue={(clientId: string) =>
+                      clients.find((c) => c.id === clientId)?.name || ""
+                    }
+                  />
+                  <Combobox.Button className="absolute inset-y-0 right-0 flex items-center rounded-r-md px-2 focus:outline-none">
+                    <ChevronsUpDown
+                      className="h-5 w-5 text-gray-400"
+                      aria-hidden="true"
+                    />
+                  </Combobox.Button>
+
+                  <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-card py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                    {clients.map((client) => (
+                      <Combobox.Option
+                        key={client.id}
+                        value={client.id}
+                        className={({ active }: { active: boolean }) =>
+                          classNames(
+                            "relative cursor-default select-none py-2 pl-3 pr-9",
+                            active
+                              ? "bg-primary text-primary-foreground"
+                              : "text-foreground"
+                          )
+                        }
+                      >
+                        {({
+                          active,
+                          selected,
+                        }: {
+                          active: boolean;
+                          selected: boolean;
+                        }) => (
+                          <>
+                            <span
+                              className={classNames(
+                                "block truncate",
+                                selected && "font-semibold"
+                              )}
+                            >
+                              {client.name}
+                            </span>
+                            {selected && (
+                              <span
+                                className={classNames(
+                                  "absolute inset-y-0 right-0 flex items-center pr-4",
+                                  active ? "text-white" : "text-primary"
+                                )}
+                              >
+                                <Check className="h-5 w-5" aria-hidden="true" />
+                              </span>
+                            )}
+                          </>
+                        )}
+                      </Combobox.Option>
+                    ))}
+                  </Combobox.Options>
+                </div>
+              </Combobox>
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -285,15 +350,30 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   );
 };
 
+type View = "monthly" | "weekly" | "daily" | "list" | "inbox" | "clients";
+
 interface HeaderProps {
-  currentView: string;
-  setView: (view: string) => void;
+  setLeftView: (view: View) => void;
+  setRightView: (view: View) => void;
+  leftView: View;
+  rightView: View;
   onNewTask: () => void;
-  onNewClient: () => void;
 }
+
+const views: { id: View; label: string }[] = [
+  { id: "monthly", label: "Mensal" },
+  { id: "weekly", label: "Semanal" },
+  { id: "daily", label: "Diária" },
+  { id: "list", label: "Lista" },
+  { id: "inbox", label: "Inbox" },
+  { id: "clients", label: "Clientes" },
+];
+
 export const Header: React.FC<HeaderProps> = ({
-  currentView,
-  setView,
+  setLeftView,
+  setRightView,
+  leftView,
+  rightView,
   onNewTask,
 }) => (
   <header className="p-4 bg-card border-b flex flex-wrap justify-between items-center gap-4">
@@ -301,31 +381,36 @@ export const Header: React.FC<HeaderProps> = ({
       <CalendarIcon className="text-primary h-8 w-8" />
       <h1 className="text-2xl font-bold text-foreground">Agenda Pro</h1>
     </div>
-    <nav className="flex flex-wrap items-center gap-1 bg-secondary p-1 rounded-lg">
-      {["monthly", "weekly", "daily", "list", "inbox", "clients"].map(
-        (view) => (
-          <button
-            key={view}
-            onClick={() => setView(view)}
-            className={`px-3 py-1.5 text-sm font-medium rounded-md capitalize transition-colors ${
-              currentView === view
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-muted-foreground hover:bg-background hover:text-foreground"
-            }`}
-          >
-            {view === "daily"
-              ? "Diária"
-              : view === "weekly"
-              ? "Semanal"
-              : view === "monthly"
-              ? "Mensal"
-              : view === "clients"
-              ? "Clientes"
-              : view}
-          </button>
-        )
-      )}
-    </nav>
+    <div className="flex items-center gap-4">
+      <div>
+        <label className="text-xs text-muted-foreground">Coluna Esquerda</label>
+        <select
+          value={leftView}
+          onChange={(e) => setLeftView(e.target.value as View)}
+          className="bg-secondary p-1 rounded-md text-sm"
+        >
+          {views.map((view) => (
+            <option key={view.id} value={view.id}>
+              {view.label}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label className="text-xs text-muted-foreground">Coluna Direita</label>
+        <select
+          value={rightView}
+          onChange={(e) => setRightView(e.target.value as View)}
+          className="bg-secondary p-1 rounded-md text-sm"
+        >
+          {views.map((view) => (
+            <option key={view.id} value={view.id}>
+              {view.label}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
     <div className="flex items-center gap-3">
       <button
         onClick={onNewTask}
@@ -453,6 +538,72 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
           >
             Confirmar
           </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+interface DayTasksModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  tasks: Task[];
+  clients: Client[];
+  selectedDate: string | null;
+  onEditTask: (task: Task) => void;
+  onDragStart: (e: React.DragEvent, taskId: string) => void;
+}
+
+export const DayTasksModal: React.FC<DayTasksModalProps> = ({
+  isOpen,
+  onClose,
+  tasks,
+  clients,
+  selectedDate,
+  onEditTask,
+  onDragStart,
+}) => {
+  if (!isOpen || !selectedDate) return null;
+
+  const tasksForDay = tasks.filter((t) => t.deadline === selectedDate);
+
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+      <div className="bg-card rounded-xl shadow-2xl p-6 w-full max-w-2xl max-h-[80vh] flex flex-col border">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-bold text-foreground">
+            Tarefas para{" "}
+            {new Date(selectedDate + "T00:00:00-03:00").toLocaleDateString(
+              "pt-BR"
+            )}
+          </h2>
+          <button
+            onClick={onClose}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <X />
+          </button>
+        </div>
+        <div className="overflow-y-auto flex-grow pr-2">
+          {tasksForDay.length > 0 ? (
+            <div className="space-y-3">
+              {tasksForDay.map((task) => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  clients={clients}
+                  onEdit={onEditTask}
+                  onDragStart={onDragStart}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-muted-foreground">
+                Nenhuma tarefa para este dia.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -1,16 +1,25 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import type { Task, Client, SortConfig } from "../lib/types";
-import { initialClients, initialTasks, PRIORITY_MAP } from "../lib/data";
+import type { Task, Client, SortConfig, Holiday } from "../lib/types";
+import {
+  initialClients,
+  initialTasks,
+  PRIORITY_MAP,
+  TASK_CATEGORIES,
+} from "../lib/data";
+import { fetchHolidays } from "../lib/holidays";
 import {
   TaskModal,
   TaskCard,
   ConfirmationModal,
   Header,
   CalendarControls,
+  DayTasksModal,
 } from "../components/AgendaUI";
 import { Edit, Plus, Trash, X } from "lucide-react";
+
+type View = "monthly" | "weekly" | "daily" | "list" | "inbox" | "clients";
 
 // --- VIEW PROPS ---
 interface ViewProps {
@@ -26,12 +35,19 @@ interface CalendarViewProps extends ViewProps {
 }
 
 // --- VIEWS ---
-const MonthlyView: React.FC<Omit<CalendarViewProps, "clients" | "onEdit">> = ({
+const MonthlyView: React.FC<
+  Omit<CalendarViewProps, "clients" | "onEdit"> & {
+    onDayClick: (date: string) => void;
+    holidays: Holiday[];
+  }
+> = ({
   tasks,
   date,
   onDrop,
   onDragOver,
   onDragStart,
+  onDayClick,
+  holidays,
 }) => {
   const getDaysInMonth = () => {
     const year = date.getFullYear();
@@ -80,15 +96,17 @@ const MonthlyView: React.FC<Omit<CalendarViewProps, "clients" | "onEdit">> = ({
       ))}
       {daysOfMonth.map(({ date: dayDate, isCurrentMonth }) => {
         const tasksForDay = tasks.filter((t) => t.deadline === dayDate);
+        const holiday = holidays.find((h) => h.date === dayDate);
         const isToday = dayDate === today;
         return (
           <div
             key={dayDate}
             onDrop={(e) => onDrop(e, dayDate)}
             onDragOver={onDragOver}
+            onClick={() => onDayClick(dayDate)}
             className={`border-r border-b p-2 min-h-[120px] ${
               isCurrentMonth ? "bg-card" : "bg-muted/50"
-            } transition-colors duration-300 ease-in-out hover:bg-accent`}
+            } transition-colors duration-300 ease-in-out hover:bg-accent cursor-pointer`}
           >
             <p
               className={`text-sm text-right ${
@@ -102,7 +120,12 @@ const MonthlyView: React.FC<Omit<CalendarViewProps, "clients" | "onEdit">> = ({
               {new Date(dayDate + "T00:00:00-03:00").getDate()}
             </p>
             <div className="mt-1 space-y-1">
-              {tasksForDay.slice(0, 2).map((task) => (
+              {holiday && (
+                <div className="text-xs bg-green-100 text-green-800 p-1 rounded truncate">
+                  {holiday.name}
+                </div>
+              )}
+              {tasksForDay.slice(0, 1).map((task) => (
                 <div
                   key={task.id}
                   draggable
@@ -236,21 +259,32 @@ interface ListViewProps {
   sortConfig: SortConfig;
   onTaskDelete: (taskId: string) => void;
 }
-const ListView: React.FC<ListViewProps> = ({
+const ListView: React.FC<
+  ListViewProps & {
+    inlineEditing: { taskId: string; field: keyof Task } | null;
+    setInlineEditing: (
+      editing: { taskId: string; field: keyof Task } | null
+    ) => void;
+    onUpdateField: (taskId: string, field: keyof Task, value: any) => void;
+  }
+> = ({
   tasks,
   clients,
   onEdit,
   setSort,
   sortConfig,
   onTaskDelete,
+  inlineEditing,
+  setInlineEditing,
+  onUpdateField,
 }) => {
   const sortedTasks = useMemo(() => {
     let sortableItems = [...tasks];
     if (sortConfig) {
       sortableItems.sort((a, b) => {
-        if (a[sortConfig.key] < b[sortConfig.key])
+        if (a[sortConfig.key]! < b[sortConfig.key]!)
           return sortConfig.direction === "ascending" ? -1 : 1;
-        if (a[sortConfig.key] > b[sortConfig.key])
+        if (a[sortConfig.key]! > b[sortConfig.key]!)
           return sortConfig.direction === "ascending" ? 1 : -1;
         return 0;
       });
@@ -268,6 +302,19 @@ const ListView: React.FC<ListViewProps> = ({
     }
     setSort({ key, direction });
   };
+
+  const handleKeyDown = (
+    e: React.KeyboardEvent,
+    taskId: string,
+    field: keyof Task
+  ) => {
+    if (e.key === "Enter") {
+      onUpdateField(taskId, field, (e.target as HTMLInputElement).value);
+    } else if (e.key === "Escape") {
+      setInlineEditing(null);
+    }
+  };
+
   return (
     <div className="p-4">
       <div className="bg-card rounded-lg shadow-md overflow-hidden border">
@@ -313,30 +360,147 @@ const ListView: React.FC<ListViewProps> = ({
             {sortedTasks.map((task) => {
               const client = clients.find((c) => c.id === task.clientId);
               const priority = PRIORITY_MAP[task.priority];
+              const isEditing = (field: keyof Task) =>
+                inlineEditing?.taskId === task.id &&
+                inlineEditing?.field === field;
+
               return (
                 <tr key={task.id} className="hover:bg-muted/50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-foreground">
-                      {task.title}
-                    </div>
+                  <td
+                    className="px-6 py-4 whitespace-nowrap cursor-pointer"
+                    onClick={() =>
+                      setInlineEditing({ taskId: task.id, field: "title" })
+                    }
+                  >
+                    {isEditing("title") ? (
+                      <input
+                        type="text"
+                        defaultValue={task.title}
+                        className="bg-transparent border-b"
+                        onBlur={(e) =>
+                          onUpdateField(task.id, "title", e.target.value)
+                        }
+                        onKeyDown={(e) => handleKeyDown(e, task.id, "title")}
+                        autoFocus
+                      />
+                    ) : (
+                      <div className="text-sm font-medium text-foreground">
+                        {task.title}
+                      </div>
+                    )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                    {client?.name}
+                  <td
+                    className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground cursor-pointer"
+                    onClick={() =>
+                      setInlineEditing({ taskId: task.id, field: "clientId" })
+                    }
+                  >
+                    {isEditing("clientId") ? (
+                      <select
+                        defaultValue={task.clientId}
+                        className="bg-transparent border-b"
+                        onBlur={(e) =>
+                          onUpdateField(task.id, "clientId", e.target.value)
+                        }
+                        onKeyDown={(e) => handleKeyDown(e, task.id, "clientId")}
+                        autoFocus
+                      >
+                        {clients.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      client?.name
+                    )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                    {new Date(
-                      task.deadline + "T00:00:00-03:00"
-                    ).toLocaleDateString("pt-BR")}
+                  <td
+                    className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground cursor-pointer"
+                    onClick={() =>
+                      setInlineEditing({ taskId: task.id, field: "deadline" })
+                    }
+                  >
+                    {isEditing("deadline") ? (
+                      <input
+                        type="date"
+                        defaultValue={task.deadline || ""}
+                        className="bg-transparent border-b"
+                        onBlur={(e) =>
+                          onUpdateField(task.id, "deadline", e.target.value)
+                        }
+                        onKeyDown={(e) => handleKeyDown(e, task.id, "deadline")}
+                        autoFocus
+                      />
+                    ) : task.deadline ? (
+                      new Date(
+                        task.deadline + "T00:00:00-03:00"
+                      ).toLocaleDateString("pt-BR")
+                    ) : (
+                      "Sem prazo"
+                    )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${priority.bgColor} ${priority.textColor}`}
-                    >
-                      {priority.label}
-                    </span>
+                  <td
+                    className="px-6 py-4 whitespace-nowrap cursor-pointer"
+                    onClick={() =>
+                      setInlineEditing({ taskId: task.id, field: "priority" })
+                    }
+                  >
+                    {isEditing("priority") ? (
+                      <select
+                        defaultValue={task.priority}
+                        className="bg-transparent border-b"
+                        onBlur={(e) =>
+                          onUpdateField(
+                            task.id,
+                            "priority",
+                            parseInt(e.target.value)
+                          )
+                        }
+                        onKeyDown={(e) => handleKeyDown(e, task.id, "priority")}
+                        autoFocus
+                      >
+                        {Object.entries(PRIORITY_MAP).map(
+                          ([level, { label }]) => (
+                            <option key={level} value={level}>
+                              {label}
+                            </option>
+                          )
+                        )}
+                      </select>
+                    ) : (
+                      <span
+                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${priority.bgColor} ${priority.textColor}`}
+                      >
+                        {priority.label}
+                      </span>
+                    )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                    {task.category}
+                  <td
+                    className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground cursor-pointer"
+                    onClick={() =>
+                      setInlineEditing({ taskId: task.id, field: "category" })
+                    }
+                  >
+                    {isEditing("category") ? (
+                      <select
+                        defaultValue={task.category}
+                        className="bg-transparent border-b"
+                        onBlur={(e) =>
+                          onUpdateField(task.id, "category", e.target.value)
+                        }
+                        onKeyDown={(e) => handleKeyDown(e, task.id, "category")}
+                        autoFocus
+                      >
+                        {TASK_CATEGORIES.map((cat) => (
+                          <option key={cat} value={cat}>
+                            {cat}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      task.category
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex justify-end items-center gap-4">
                     <button
@@ -510,14 +674,24 @@ const InboxView: React.FC<InboxProps> = ({
   onEdit,
 }) => {
   const [quickTaskTitle, setQuickTaskTitle] = useState("");
+  const [selectedClientId, setSelectedClientId] = useState<string>(
+    clients[0]?.id || ""
+  );
+
+  useEffect(() => {
+    if (!selectedClientId && clients.length > 0) {
+      setSelectedClientId(clients[0].id);
+    }
+  }, [clients, selectedClientId]);
+
   const handleQuickAddTask = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!quickTaskTitle.trim() || !clients.length) return;
+    if (!quickTaskTitle.trim() || !selectedClientId) return;
     onSave({
       title: quickTaskTitle,
       description: "",
-      deadline: new Date().toISOString().split("T")[0],
-      clientId: clients[0].id,
+      deadline: null,
+      clientId: selectedClientId,
       priority: 1,
       category: "Outro",
       recurrence: "none",
@@ -525,9 +699,7 @@ const InboxView: React.FC<InboxProps> = ({
     setQuickTaskTitle("");
   };
   const inboxTasks = tasks
-    .filter(
-      (t) => new Date(t.createdAt).toDateString() === new Date().toDateString()
-    )
+    .filter((t) => !t.deadline)
     .sort(
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -546,6 +718,17 @@ const InboxView: React.FC<InboxProps> = ({
             placeholder="Adicionar nova tarefa rápida..."
             className="flex-grow border rounded-md shadow-sm p-2 bg-transparent"
           />
+          <select
+            value={selectedClientId}
+            onChange={(e) => setSelectedClientId(e.target.value)}
+            className="border rounded-md shadow-sm p-2 bg-transparent"
+          >
+            {clients.map((client) => (
+              <option key={client.id} value={client.id}>
+                {client.name}
+              </option>
+            ))}
+          </select>
           <button
             type="submit"
             className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
@@ -554,7 +737,7 @@ const InboxView: React.FC<InboxProps> = ({
           </button>
         </form>
         <h3 className="text-lg font-semibold text-foreground mb-3">
-          Tarefas adicionadas recentemente
+          Tarefas sem prazo
         </h3>
         <div className="space-y-3">
           {inboxTasks.length > 0 ? (
@@ -586,7 +769,7 @@ const InboxView: React.FC<InboxProps> = ({
             ))
           ) : (
             <p className="text-muted-foreground text-center py-4">
-              Nenhuma tarefa adicionada hoje.
+              Nenhuma tarefa sem prazo.
             </p>
           )}
         </div>
@@ -597,22 +780,59 @@ const InboxView: React.FC<InboxProps> = ({
 
 // --- COMPONENTE PRINCIPAL DA PÁGINA ---
 export default function AgendaPage() {
-  const [currentView, setView] = useState("monthly");
+  const [leftView, setLeftView] = useState<View>("monthly");
+  const [rightView, setRightView] = useState<View>("inbox");
   const [currentDate, setDate] = useState(new Date());
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [clients, setClients] = useState<Client[]>(initialClients);
   const [isTaskModalOpen, setTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [sortConfig, setSortConfig] = useState<SortConfig>({
     key: "deadline",
     direction: "ascending",
   });
+  const [inlineEditing, setInlineEditing] = useState<{
+    taskId: string;
+    field: keyof Task;
+  } | null>(null);
+
+  const handleUpdateTaskField = (
+    taskId: string,
+    field: keyof Task,
+    value: any
+  ) => {
+    setTasks((prevTasks) =>
+      prevTasks.map((task) =>
+        task.id === taskId ? { ...task, [field]: value } : task
+      )
+    );
+    setInlineEditing(null);
+  };
   const [confirmState, setConfirmState] = useState<{
     isOpen: boolean;
     title: string;
     message: string;
     onConfirm: (() => void) | null;
   }>({ isOpen: false, title: "", message: "", onConfirm: null });
+
+  useEffect(() => {
+    const getHolidays = async () => {
+      const year = new Date().getFullYear();
+      const fetchedHolidays = await fetchHolidays(year);
+      setHolidays(fetchedHolidays);
+    };
+    getHolidays();
+  }, []);
+
+  const [dayTasksModalState, setDayTasksModalState] = useState<{
+    isOpen: boolean;
+    date: string | null;
+  }>({ isOpen: false, date: null });
+
+  const handleDayClick = (date: string) => {
+    setDayTasksModalState({ isOpen: true, date });
+  };
 
   const handleSaveTask = (taskData: Omit<Task, "id" | "createdAt"> | Task) => {
     if ("id" in taskData) {
@@ -696,7 +916,7 @@ export default function AgendaPage() {
     e.preventDefault();
   };
 
-  const renderView = () => {
+  const renderView = (view: View) => {
     const props = {
       tasks,
       clients,
@@ -706,13 +926,19 @@ export default function AgendaPage() {
       onDragOver: handleDragOver,
       onDragStart: handleDragStart,
     };
-    switch (currentView) {
+    switch (view) {
       case "daily":
         return <DailyView {...props} />;
       case "weekly":
         return <WeeklyView {...props} />;
       case "monthly":
-        return <MonthlyView {...props} />;
+        return (
+          <MonthlyView
+            {...props}
+            holidays={holidays}
+            onDayClick={handleDayClick}
+          />
+        );
       case "list":
         return (
           <ListView
@@ -722,6 +948,9 @@ export default function AgendaPage() {
             setSort={setSortConfig}
             sortConfig={sortConfig}
             onTaskDelete={handleTaskDelete}
+            inlineEditing={inlineEditing}
+            setInlineEditing={setInlineEditing}
+            onUpdateField={handleUpdateTaskField}
           />
         );
       case "clients":
@@ -742,26 +971,43 @@ export default function AgendaPage() {
           />
         );
       default:
-        return <MonthlyView {...props} />;
+        return (
+          <MonthlyView
+            {...props}
+            holidays={holidays}
+            onDayClick={handleDayClick}
+          />
+        );
     }
   };
 
   return (
     <div className="h-screen w-screen bg-gray-100 font-sans flex flex-col antialiased">
       <Header
-        currentView={currentView}
-        setView={setView}
         onNewTask={handleNewTask}
-        onNewClient={() => setView("clients")}
+        setLeftView={setLeftView}
+        setRightView={setRightView}
+        leftView={leftView}
+        rightView={rightView}
       />
-      {["daily", "weekly", "monthly"].includes(currentView) && (
-        <CalendarControls
-          currentDate={currentDate}
-          setDate={setDate}
-          view={currentView}
-        />
-      )}
-      <main className="flex-grow overflow-auto">{renderView()}</main>
+      {["daily", "weekly", "monthly"].includes(leftView) ||
+        (["daily", "weekly", "monthly"].includes(rightView) && (
+          <CalendarControls
+            currentDate={currentDate}
+            setDate={setDate}
+            view={
+              ["daily", "weekly", "monthly"].includes(leftView)
+                ? leftView
+                : rightView
+            }
+          />
+        ))}
+
+      <main className="flex-grow overflow-auto flex">
+        <div className="w-1/2 border-r">{renderView(leftView)}</div>
+        <div className="w-1/2">{renderView(rightView)}</div>
+      </main>
+
       <TaskModal
         isOpen={isTaskModalOpen}
         onClose={() => setTaskModalOpen(false)}
@@ -782,6 +1028,15 @@ export default function AgendaPage() {
         onConfirm={confirmState.onConfirm!}
         title={confirmState.title}
         message={confirmState.message}
+      />
+      <DayTasksModal
+        isOpen={dayTasksModalState.isOpen}
+        onClose={() => setDayTasksModalState({ isOpen: false, date: null })}
+        tasks={tasks}
+        clients={clients}
+        selectedDate={dayTasksModalState.date}
+        onEditTask={handleEditTask}
+        onDragStart={handleDragStart}
       />
     </div>
   );
