@@ -4,15 +4,14 @@ import React, { useState, useEffect, useMemo } from "react";
 import type { Task, Client, SortConfig } from "../lib/types";
 import { initialClients, initialTasks, PRIORITY_MAP } from "../lib/data";
 import {
-  Header,
-  CalendarControls,
   TaskModal,
   TaskCard,
-  EditIcon,
-  TrashIcon,
-  PlusIcon,
   ConfirmationModal,
+  Header,
+  CalendarControls,
 } from "../components/AgendaUI";
+import { Edit, Plus, Trash } from "lucide-react";
+import { MainLayout } from "@/components/layout";
 
 // --- VIEW PROPS ---
 interface ViewProps {
@@ -75,7 +74,7 @@ const MonthlyView: React.FC<Omit<CalendarViewProps, "clients" | "onEdit">> = ({
       {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((day) => (
         <div
           key={day}
-          className="text-center font-bold text-sm text-gray-600 p-2 border-b border-r"
+          className="text-center font-bold text-sm text-muted-foreground p-2 border-b border-r"
         >
           {day}
         </div>
@@ -89,15 +88,15 @@ const MonthlyView: React.FC<Omit<CalendarViewProps, "clients" | "onEdit">> = ({
             onDrop={(e) => onDrop(e, dayDate)}
             onDragOver={onDragOver}
             className={`border-r border-b p-2 min-h-[120px] ${
-              isCurrentMonth ? "bg-white" : "bg-gray-50"
-            } transition-colors duration-300 ease-in-out hover:bg-blue-50`}
+              isCurrentMonth ? "bg-card" : "bg-muted/50"
+            } transition-colors duration-300 ease-in-out hover:bg-accent`}
           >
             <p
               className={`text-sm text-right ${
-                !isCurrentMonth && "text-gray-400"
+                !isCurrentMonth && "text-muted-foreground/50"
               } ${
                 isToday
-                  ? "bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center ml-auto font-bold"
+                  ? "bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center ml-auto font-bold"
                   : ""
               }`}
             >
@@ -109,14 +108,14 @@ const MonthlyView: React.FC<Omit<CalendarViewProps, "clients" | "onEdit">> = ({
                   key={task.id}
                   draggable
                   onDragStart={(e) => onDragStart(e, task.id)}
-                  className="text-xs bg-blue-100 text-blue-800 p-1 rounded truncate cursor-grab active:cursor-grabbing"
+                  className="text-xs bg-primary/10 text-primary p-1 rounded truncate cursor-grab active:cursor-grabbing"
                   title={task.title}
                 >
                   {task.title}
                 </div>
               ))}
               {tasksForDay.length > 2 && (
-                <p className="text-xs text-gray-500 text-center mt-1">
+                <p className="text-xs text-muted-foreground text-center mt-1">
                   +{tasksForDay.length - 2} mais
                 </p>
               )}
@@ -156,12 +155,12 @@ const WeeklyView: React.FC<CalendarViewProps> = ({
         return (
           <div key={dayDate} className="border-r border-b p-2 flex flex-col">
             <div className="text-center mb-2">
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 {d.toLocaleDateString("pt-BR", { weekday: "short" })}
               </p>
               <p
                 className={`text-lg font-bold ${
-                  isToday ? "text-blue-600" : "text-gray-700"
+                  isToday ? "text-primary" : "text-foreground"
                 }`}
               >
                 {d.getDate()}
@@ -170,7 +169,7 @@ const WeeklyView: React.FC<CalendarViewProps> = ({
             <div
               onDrop={(e) => onDrop(e, dayDate)}
               onDragOver={onDragOver}
-              className="flex-grow space-y-2 bg-gray-50 p-2 rounded-md min-h-[200px] hover:bg-blue-50 transition-colors"
+              className="flex-grow space-y-2 bg-muted/50 p-2 rounded-md min-h-[200px] hover:bg-accent transition-colors"
             >
               {tasksForDay.map((task) => (
                 <TaskCard
@@ -201,12 +200,12 @@ const DailyView: React.FC<CalendarViewProps> = ({
   const tasksForDay = tasks.filter((t) => t.deadline === dayDate);
   return (
     <div
-      className="p-4 flex-grow bg-gray-50"
+      className="p-4 flex-grow bg-muted/50"
       onDrop={(e) => onDrop(e, dayDate)}
       onDragOver={onDragOver}
     >
-      <div className="bg-white p-4 rounded-lg shadow-md max-w-2xl mx-auto">
-        <h3 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">
+      <div className="bg-card p-4 rounded-lg shadow-md max-w-2xl mx-auto">
+        <h3 className="text-lg font-semibold text-foreground border-b pb-2 mb-4">
           Tarefas para{" "}
           {new Date(dayDate + "T00:00:00-03:00").toLocaleDateString("pt-BR")}
         </h3>
@@ -221,7 +220,7 @@ const DailyView: React.FC<CalendarViewProps> = ({
             />
           ))
         ) : (
-          <p className="text-gray-500 text-center py-8">
+          <p className="text-muted-foreground text-center py-8">
             Nenhuma tarefa para hoje.
           </p>
         )}
@@ -272,60 +271,60 @@ const ListView: React.FC<ListViewProps> = ({
   };
   return (
     <div className="p-4">
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+      <div className="bg-card rounded-lg shadow-md overflow-hidden border">
+        <table className="min-w-full divide-y">
+          <thead className="bg-muted/50">
             <tr>
               <th
                 onClick={() => requestSort("title")}
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer"
               >
                 Tarefa
               </th>
               <th
                 onClick={() => requestSort("clientId")}
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer"
               >
                 Cliente
               </th>
               <th
                 onClick={() => requestSort("deadline")}
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer"
               >
                 Prazo
               </th>
               <th
                 onClick={() => requestSort("priority")}
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer"
               >
                 Prioridade
               </th>
               <th
                 onClick={() => requestSort("category")}
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer"
               >
                 Categoria
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Ações
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-card divide-y">
             {sortedTasks.map((task) => {
               const client = clients.find((c) => c.id === task.clientId);
               const priority = PRIORITY_MAP[task.priority];
               return (
-                <tr key={task.id} className="hover:bg-gray-50">
+                <tr key={task.id} className="hover:bg-muted/50">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
+                    <div className="text-sm font-medium text-foreground">
                       {task.title}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                     {client?.name}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                     {new Date(
                       task.deadline + "T00:00:00-03:00"
                     ).toLocaleDateString("pt-BR")}
@@ -337,21 +336,21 @@ const ListView: React.FC<ListViewProps> = ({
                       {priority.label}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                     {task.category}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex justify-end items-center gap-4">
                     <button
                       onClick={() => onEdit(task)}
-                      className="text-blue-600 hover:text-blue-900"
+                      className="text-primary hover:text-primary/80"
                     >
-                      <EditIcon className="w-5 h-5" />
+                      <Edit className="w-5 h-5" />
                     </button>
                     <button
                       onClick={() => onTaskDelete(task.id)}
-                      className="text-red-600 hover:text-red-900"
+                      className="text-destructive hover:text-destructive/80"
                     >
-                      <TrashIcon className="w-5 h-5" />
+                      <Trash className="w-5 h-5" />
                     </button>
                   </td>
                 </tr>
@@ -412,7 +411,7 @@ const ClientManagerView: React.FC<ClientManagerProps> = ({
     };
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
-        <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <div className="bg-card rounded-lg p-6 w-full max-w-md border">
           <h2 className="text-xl font-bold mb-4">
             {client ? "Editar Cliente" : "Novo Cliente"}
           </h2>
@@ -421,20 +420,20 @@ const ClientManagerView: React.FC<ClientManagerProps> = ({
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full border p-2 rounded-md"
+              className="w-full border p-2 rounded-md bg-transparent"
               placeholder="Nome do Cliente"
             />
             <div className="flex justify-end gap-3 mt-4">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 bg-gray-200 rounded-md"
+                className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-blue-600 text-white rounded-md"
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-md"
               >
                 Salvar
               </button>
@@ -452,37 +451,37 @@ const ClientManagerView: React.FC<ClientManagerProps> = ({
         onSave={handleSave}
         client={editingClient}
       />
-      <div className="bg-white rounded-lg shadow-md p-6 max-w-3xl mx-auto">
+      <div className="bg-card rounded-lg shadow-md p-6 max-w-3xl mx-auto border">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold text-gray-800">
+          <h2 className="text-2xl font-bold text-foreground">
             Gerenciar Clientes
           </h2>
           <button
             onClick={handleNew}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 flex items-center gap-2"
           >
-            <PlusIcon className="w-5 h-5" /> Novo Cliente
+            <Plus className="w-5 h-5" /> Novo Cliente
           </button>
         </div>
         <ul className="space-y-3">
           {clients.map((client) => (
             <li
               key={client.id}
-              className="flex justify-between items-center p-3 bg-gray-50 rounded-md"
+              className="flex justify-between items-center p-3 bg-muted/50 rounded-md"
             >
-              <span className="text-gray-700">{client.name}</span>
+              <span className="text-foreground">{client.name}</span>
               <div className="flex gap-3">
                 <button
                   onClick={() => handleEdit(client)}
-                  className="text-blue-600"
+                  className="text-primary"
                 >
-                  <EditIcon />
+                  <Edit />
                 </button>
                 <button
                   onClick={() => onDelete(client.id)}
-                  className="text-red-600"
+                  className="text-destructive"
                 >
-                  <TrashIcon />
+                  <Trash />
                 </button>
               </div>
             </li>
@@ -530,8 +529,8 @@ const InboxView: React.FC<InboxProps> = ({
     );
   return (
     <div className="p-4">
-      <div className="bg-white rounded-lg shadow-md p-6 max-w-3xl mx-auto">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">
+      <div className="bg-card rounded-lg shadow-md p-6 max-w-3xl mx-auto border">
+        <h2 className="text-2xl font-bold text-foreground mb-4">
           Inbox / Tarefas Rápidas
         </h2>
         <form onSubmit={handleQuickAddTask} className="flex gap-2 mb-6">
@@ -540,16 +539,16 @@ const InboxView: React.FC<InboxProps> = ({
             value={quickTaskTitle}
             onChange={(e) => setQuickTaskTitle(e.target.value)}
             placeholder="Adicionar nova tarefa rápida..."
-            className="flex-grow border border-gray-300 rounded-md shadow-sm p-2"
+            className="flex-grow border rounded-md shadow-sm p-2 bg-transparent"
           />
           <button
             type="submit"
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
           >
             Adicionar
           </button>
         </form>
-        <h3 className="text-lg font-semibold text-gray-700 mb-3">
+        <h3 className="text-lg font-semibold text-foreground mb-3">
           Tarefas adicionadas recentemente
         </h3>
         <div className="space-y-3">
@@ -557,7 +556,7 @@ const InboxView: React.FC<InboxProps> = ({
             inboxTasks.map((task) => (
               <div
                 key={task.id}
-                className="flex justify-between items-center p-3 bg-gray-50 rounded-md"
+                className="flex justify-between items-center p-3 bg-muted/50 rounded-md"
               >
                 <div className="flex items-center gap-3">
                   <div
@@ -566,22 +565,22 @@ const InboxView: React.FC<InboxProps> = ({
                     }`}
                   ></div>
                   <div>
-                    <p className="text-gray-800">{task.title}</p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-foreground">{task.title}</p>
+                    <p className="text-xs text-muted-foreground">
                       {clients.find((c) => c.id === task.clientId)?.name}
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={() => onEdit(task)}
-                  className="text-blue-600 hover:text-blue-800 text-sm"
+                  className="text-primary hover:text-primary/80 text-sm"
                 >
                   Detalhes
                 </button>
               </div>
             ))
           ) : (
-            <p className="text-gray-500 text-center py-4">
+            <p className="text-muted-foreground text-center py-4">
               Nenhuma tarefa adicionada hoje.
             </p>
           )}
@@ -590,6 +589,36 @@ const InboxView: React.FC<InboxProps> = ({
     </div>
   );
 };
+
+// --- COMPONENTE PRINCIPAL DA PÁGINA ---
+
+interface CalendarViewProps extends ViewProps {
+  date: Date;
+}
+
+// --- VIEWS ---
+
+interface ListViewProps {
+  tasks: Task[];
+  clients: Client[];
+  onEdit: (task: Task) => void;
+  setSort: (config: SortConfig) => void;
+  sortConfig: SortConfig;
+  onTaskDelete: (taskId: string) => void;
+}
+
+interface ClientManagerProps {
+  clients: Client[];
+  onSave: (client: Omit<Client, "id"> | Client) => void;
+  onDelete: (clientId: string) => void;
+}
+
+interface InboxProps {
+  tasks: Task[];
+  clients: Client[];
+  onSave: (task: Omit<Task, "id" | "createdAt">) => void;
+  onEdit: (task: Task) => void;
+}
 
 // --- COMPONENTE PRINCIPAL DA PÁGINA ---
 export default function AgendaPage() {

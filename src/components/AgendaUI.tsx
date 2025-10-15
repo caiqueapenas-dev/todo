@@ -2,122 +2,7 @@
 import React, { useState, useEffect } from "react";
 import type { Task, Client } from "../lib/types";
 import { PRIORITY_MAP, TASK_CATEGORIES } from "../lib/data";
-
-// --- ÍCONES SVG ---
-interface IconProps {
-  className?: string;
-}
-export const PlusIcon: React.FC<IconProps> = ({ className = "w-6 h-6" }) => (
-  <svg
-    className={className}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-    />
-  </svg>
-);
-export const CalendarIcon: React.FC<IconProps> = ({
-  className = "w-6 h-6",
-}) => (
-  <svg
-    className={className}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-    />
-  </svg>
-);
-export const ChevronLeftIcon: React.FC<IconProps> = ({
-  className = "w-6 h-6",
-}) => (
-  <svg
-    className={className}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M15 19l-7-7 7-7"
-    />
-  </svg>
-);
-export const ChevronRightIcon: React.FC<IconProps> = ({
-  className = "w-6 h-6",
-}) => (
-  <svg
-    className={className}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M9 5l7 7-7 7"
-    />
-  </svg>
-);
-export const TrashIcon: React.FC<IconProps> = ({ className = "w-4 h-4" }) => (
-  <svg
-    className={className}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-    />
-  </svg>
-);
-export const EditIcon: React.FC<IconProps> = ({ className = "w-4 h-4" }) => (
-  <svg
-    className={className}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z"
-    />
-  </svg>
-);
-export const XIcon: React.FC<IconProps> = ({ className = "w-6 h-6" }) => (
-  <svg
-    className={className}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M6 18L18 6M6 6l12 12"
-    />
-  </svg>
-);
+import { Edit, Trash, X } from "lucide-react";
 
 // --- COMPONENTES DA UI ---
 interface TaskCardProps {
@@ -138,30 +23,30 @@ export const TaskCard: React.FC<TaskCardProps> = ({
     <div
       draggable
       onDragStart={(e) => onDragStart(e, task.id)}
-      className="bg-white p-3 rounded-lg shadow-sm border border-gray-200 cursor-grab active:cursor-grabbing mb-2"
+      className="bg-card p-3 rounded-lg shadow-sm border cursor-grab active:cursor-grabbing mb-2"
     >
       <div className="flex justify-between items-start">
-        <h4 className="font-bold text-gray-800 text-sm">{task.title}</h4>
+        <h4 className="font-bold text-card-foreground text-sm">{task.title}</h4>
         <div
           className={`w-3 h-3 rounded-full ${priority.color} flex-shrink-0 ml-2`}
           title={`Prioridade: ${priority.label}`}
         ></div>
       </div>
-      <p className="text-xs text-gray-500 mt-1">{task.description}</p>
+      <p className="text-xs text-muted-foreground mt-1">{task.description}</p>
       <div className="text-xs mt-3 space-y-1">
         <span
           className={`px-2 py-0.5 rounded-full font-medium ${priority.bgColor} ${priority.textColor}`}
         >
           {priority.label}
         </span>
-        <span className="px-2 py-0.5 rounded-full font-medium bg-blue-100 text-blue-800 block w-fit">
+        <span className="px-2 py-0.5 rounded-full font-medium bg-primary/10 text-primary block w-fit">
           {client?.name || "Cliente"}
         </span>
-        <span className="px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-800 block w-fit">
+        <span className="px-2 py-0.5 rounded-full font-medium bg-secondary text-secondary-foreground block w-fit">
           {task.category}
         </span>
       </div>
-      <div className="text-xs text-gray-500 mt-2 pt-2 border-t flex justify-between items-center">
+      <div className="text-xs text-muted-foreground mt-2 pt-2 border-t flex justify-between items-center">
         <span>
           Prazo:{" "}
           {new Date(task.deadline + "T00:00:00-03:00").toLocaleDateString(
@@ -170,9 +55,9 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         </span>
         <button
           onClick={() => onEdit(task)}
-          className="text-gray-400 hover:text-blue-600"
+          className="text-muted-foreground hover:text-primary"
         >
-          <EditIcon />
+          <Edit className="w-4 h-4" />
         </button>
       </div>
     </div>
